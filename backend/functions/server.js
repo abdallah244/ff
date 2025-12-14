@@ -116,4 +116,5 @@ app.use((req, res) => {
 });
 
 // Netlify Function Handler
-exports.handler = serverless(app);
+// basePath strips the function prefix so Express sees the original /api routes
+exports.handler = serverless(app, { basePath: "/.netlify/functions/server" });
