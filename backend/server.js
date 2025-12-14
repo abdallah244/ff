@@ -119,8 +119,9 @@ const PORT = process.env.PORT || 3000;
 // Serve Angular dist if available (for deployment)
 (() => {
   const candidates = [
-    path.join(__dirname, "../frontend/dist"),
-    path.join(__dirname, "../frontend/dist/frontend"),
+    path.join(__dirname, "../frontend/dist/browser"), // Angular 21+ with @angular/build:application
+    path.join(__dirname, "../frontend/dist"),          // Fallback
+    path.join(__dirname, "../frontend/dist/frontend"), // Old structure
   ];
   const distPath = candidates.find((p) =>
     fs.existsSync(path.join(p, "index.html"))
@@ -134,6 +135,7 @@ const PORT = process.env.PORT || 3000;
     console.log(`✓ Serving SPA from: ${distPath}`);
   } else {
     console.log("✗ SPA dist not found. Skipping static serve.");
+    console.log(`Candidates checked: ${candidates.join(", ")}`);
   }
 })();
 
