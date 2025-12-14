@@ -1,0 +1,16 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Environments
+.env
+backend/.env
+frontend/.env
+
+# Build outputs
+frontend/dist/
+
+# Editor
+.vscode/
+*.swp
+*.tmp
