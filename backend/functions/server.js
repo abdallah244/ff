@@ -123,6 +123,15 @@ app.use((req, res) => {
 // Netlify Function Handler with error guard
 exports.handler = async (event, context) => {
   try {
+    // Temporary diagnostic: bypass Express to verify function wiring
+    if (event.path === "/diagnostic" || event.rawPath === "/diagnostic") {
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ok: true, note: "Function wiring OK" }),
+      };
+    }
+
     return await serverless(app)(event, context);
   } catch (error) {
     console.error("Function error:", error);
