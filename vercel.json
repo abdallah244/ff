@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm ci && npm run build && cd ../backend && npm ci",
-  "functions": {
-    "backend/server.js": {
-      "memory": 1024,
-      "maxDuration": 60
+  "buildCommand": "cd frontend && npm ci && npm run build",
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     }
-  },
+  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "backend/server.js" },
     { "src": "/(.*)", "dest": "backend/server.js" }
