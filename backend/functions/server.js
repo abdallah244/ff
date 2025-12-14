@@ -123,6 +123,15 @@ app.use((req, res) => {
 // Netlify Function Handler with error guard
 exports.handler = async (event, context) => {
   try {
+    // Early health shortcut to isolate runtime issues
+    if ((event.path && event.path.endsWith("/api/health")) || (event.rawPath && event.rawPath.endsWith("/api/health"))) {
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ok", runtime: "netlify", ts: new Date().toISOString() }),
+      };
+    }
+
     // Temporary diagnostic: bypass Express to verify function wiring
     if (event.path === "/diagnostic" || event.rawPath === "/diagnostic") {
       return {
