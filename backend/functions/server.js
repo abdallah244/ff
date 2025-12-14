@@ -113,4 +113,76 @@ app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-module.exports = app;
+// Netlify Function Handler
+exports.handler = async (event, context) => {
+  return new Promise((resolve) => {
+    try {
+      console.log(`Handling ${event.httpMethod} ${event.rawPath || event.path}`);
+      
+      // Create request object
+      const req = {
+        method: event.httpMethod || 'GET',
+        url: event.rawPath || event.path || '/',
+        headers: event.headers || {},
+        body: event.body,
+        on: () => {},
+        once: () => {},
+        pause: () => {},
+        resume: () => {},
+        removeListener: () => {},
+      };
+
+      // Create response object
+      let statusCode = 200;
+      const responseHeaders = { 'Content-Type': 'application/json' };
+      let body = '';
+
+      const res = {
+        statusCode,
+        headers: responseHeaders,
+        status(code) {
+          statusCode = code;
+          return this;
+        },
+        setHeader(name, value) {
+          responseHeaders[name] = value;
+          return this;
+        },
+        write(chunk) {
+          body += typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
+          return this;
+        },
+        end(chunk) {
+          if (chunk) {
+            body += typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
+          }
+          console.log(`Response: ${statusCode}`);
+          resolve({
+            statusCode,
+            headers: responseHeaders,
+            body: body || ''
+          });
+        },
+        send(data) {
+          body = typeof data === 'string' ? data : JSON.stringify(data);
+          return this.end();
+        },
+        json(data) {
+          responseHeaders['Content-Type'] = 'application/json';
+          body = JSON.stringify(data);
+          return this.end();
+        }
+      };
+
+      // Call Express app
+      app(req, res);
+    } catch (error) {
+      console.error('Handler error:', error);
+      resolve({
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: error.message })
+      });
+    }
+  });
+};
