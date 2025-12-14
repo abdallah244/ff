@@ -1,12 +1,10 @@
 {
   "version": 2,
+  "buildCommand": "cd frontend && npm ci && npm run build && cd ../backend && npm ci",
   "builds": [
     {
       "src": "backend/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "excludeFiles": "frontend/**,node_modules/**,.git/**,*.md,test-*.js,.env,.gitignore"
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
