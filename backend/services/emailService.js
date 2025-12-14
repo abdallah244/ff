@@ -1,26 +1,30 @@
 // services/emailService.js
 const nodemailer = require("nodemailer");
 
-// Create transporter with better config
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+// Create transporter when credentials exist; otherwise disable email features gracefully
+let transporter = null;
+if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+  transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
 
-// Verify connection on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("✗ Email service error:", error.message);
-  } else {
-    console.log("✓ Email service ready");
-  }
-});
+  transporter.verify((error, success) => {
+    if (error) {
+      console.log("✗ Email service error:", error.message);
+    } else {
+      console.log("✓ Email service ready");
+    }
+  });
+} else {
+  console.log("ℹ Email service disabled (missing EMAIL_USER/EMAIL_PASSWORD)");
+}
 
 // Send master code email
 const sendMasterCodeEmail = async (email, code, adminName) => {

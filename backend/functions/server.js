@@ -115,5 +115,16 @@ app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-// Netlify Function Handler
-exports.handler = serverless(app);
+// Netlify Function Handler with error guard
+exports.handler = async (event, context) => {
+  try {
+    return await serverless(app)(event, context);
+  } catch (error) {
+    console.error("Function error:", error);
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: error.message || "Internal server error" }),
+    };
+  }
+};
