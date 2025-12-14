@@ -1,0 +1,17 @@
+[build]
+command = "npm --prefix=frontend ci && npm --prefix=frontend run build && npm --prefix=backend ci"
+functions = "backend"
+publish = "frontend/dist/browser"
+
+[functions]
+node_bundler = "esbuild"
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/server:splat"
+status = 200
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
