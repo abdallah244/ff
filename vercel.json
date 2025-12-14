@@ -1,6 +1,14 @@
 {
   "version": 2,
-  "builds": [{ "src": "backend/server.js", "use": "@vercel/node" }],
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node",
+      "config": {
+        "excludeFiles": "frontend/**,node_modules/**,.git/**,*.md,test-*.js,.env,.gitignore"
+      }
+    }
+  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "backend/server.js" },
     { "src": "/(.*)", "dest": "backend/server.js" }
