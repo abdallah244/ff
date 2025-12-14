@@ -42,38 +42,43 @@ app.use(
   express.static(path.join(__dirname, "../uploads"))
 );
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/store", {
-    connectTimeoutMS: 10000,
-    serverSelectionTimeoutMS: 10000,
-  })
-  .then(async () => {
-    console.log("✓ MongoDB connected");
-    try {
-      const hashedPassword = await bcrypt.hash("andallah2008", 10);
-      await User.findOneAndUpdate(
-        { email: "dada@gmail.com" },
-        {
-          $setOnInsert: {
-            name: "Admin",
-            email: "dada@gmail.com",
-            phone: "01000000000",
-            password: hashedPassword,
+// MongoDB Connection (skip if no URI to avoid lambda timeouts)
+const mongoUri = process.env.MONGO_URI;
+if (mongoUri) {
+  mongoose
+    .connect(mongoUri, {
+      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 10000,
+    })
+    .then(async () => {
+      console.log("✓ MongoDB connected");
+      try {
+        const hashedPassword = await bcrypt.hash("andallah2008", 10);
+        await User.findOneAndUpdate(
+          { email: "dada@gmail.com" },
+          {
+            $setOnInsert: {
+              name: "Admin",
+              email: "dada@gmail.com",
+              phone: "01000000000",
+              password: hashedPassword,
+            },
+            $set: {
+              role: "admin",
+              banned: false,
+            },
           },
-          $set: {
-            role: "admin",
-            banned: false,
-          },
-        },
-        { upsert: true, new: true }
-      );
-      console.log("✓ Default admin ensured");
-    } catch (error) {
-      console.error("✗ Error ensuring default admin:", error.message);
-    }
-  })
-  .catch((err) => console.error("✗ MongoDB connection error:", err.message));
+          { upsert: true, new: true }
+        );
+        console.log("✓ Default admin ensured");
+      } catch (error) {
+        console.error("✗ Error ensuring default admin:", error.message);
+      }
+    })
+    .catch((err) => console.error("✗ MongoDB connection error:", err.message));
+} else {
+  console.warn("⚠️ MONGO_URI not set; skipping Mongo connection in function");
+}
 
 // Routes
 app.use("/api/auth", authRoutes);
