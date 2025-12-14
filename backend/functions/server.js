@@ -116,73 +116,117 @@ app.use((req, res) => {
 // Netlify Function Handler
 exports.handler = async (event, context) => {
   return new Promise((resolve) => {
-    try {
-      console.log(`Handling ${event.httpMethod} ${event.rawPath || event.path}`);
+    // Netlify Function Handler - Simplified
+    exports.handler = async (event, context) => {
+      try {
+        console.log('=== Netlify Function Called ===');
+        console.log('Method:', event.httpMethod);
+        console.log('Path:', event.rawPath || event.path);
+    
+        // Handle the Express app
+        return await new Promise((resolve, reject) => {
+          const req = createRequest(event);
+          const res = createResponse(resolve);
       
-      // Create request object
+          // Pass to Express
+          app(req, res);
+      
+          // Timeout safety
+          setTimeout(() => {
+            if (!res._resolved) {
+              console.error('Request timeout');
+              resolve({
+                statusCode: 504,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ error: 'Request timeout' })
+              });
+            }
+          }, 29000);
+        });
+      } catch (error) {
+        console.error('Function error:', error);
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: error.message })
+        };
+      }
+    };
+
+    function createRequest(event) {
       const req = {
         method: event.httpMethod || 'GET',
         url: event.rawPath || event.path || '/',
+        path: event.rawPath || event.path || '/',
         headers: event.headers || {},
-        body: event.body,
-        on: () => {},
-        once: () => {},
-        pause: () => {},
-        resume: () => {},
-        removeListener: () => {},
+        body: event.body || undefined,
+    
+        // Stream methods
+        on: () => req,
+        once: () => req,
+        pause: () => req,
+        resume: () => req,
+        removeListener: () => req,
       };
+  
+      return req;
+    }
 
-      // Create response object
+    function createResponse(resolve) {
       let statusCode = 200;
-      const responseHeaders = { 'Content-Type': 'application/json' };
+      const headers = { 'Content-Type': 'application/json' };
       let body = '';
+      let _resolved = false;
 
       const res = {
+        _resolved,
+    
         statusCode,
-        headers: responseHeaders,
+        headers,
+    
         status(code) {
           statusCode = code;
+          this.statusCode = code;
           return this;
         },
+    
         setHeader(name, value) {
-          responseHeaders[name] = value;
+          headers[name] = value;
           return this;
         },
+    
         write(chunk) {
           body += typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
           return this;
         },
-        end(chunk) {
-          if (chunk) {
-            body += typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
-          }
-          console.log(`Response: ${statusCode}`);
-          resolve({
-            statusCode,
-            headers: responseHeaders,
-            body: body || ''
-          });
-        },
+    
         send(data) {
           body = typeof data === 'string' ? data : JSON.stringify(data);
           return this.end();
         },
+    
         json(data) {
-          responseHeaders['Content-Type'] = 'application/json';
+          headers['Content-Type'] = 'application/json';
           body = JSON.stringify(data);
           return this.end();
+        },
+    
+        end(data) {
+          if (data) {
+            body += typeof data === 'string' ? data : JSON.stringify(data);
+          }
+          if (!_resolved) {
+            _resolved = true;
+            console.log('=== Sending Response ===');
+            console.log('Status:', statusCode);
+            resolve({
+              statusCode,
+              headers,
+              body: body || ''
+            });
+          }
+          return this;
         }
       };
 
-      // Call Express app
-      app(req, res);
-    } catch (error) {
-      console.error('Handler error:', error);
-      resolve({
-        statusCode: 500,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: error.message })
-      });
-    }
-  });
-};
+      return res;
