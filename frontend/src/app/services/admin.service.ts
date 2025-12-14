@@ -66,7 +66,7 @@ export interface ContactRequest {
   providedIn: 'root',
 })
 export class AdminService {
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = '/api';
   private pageContent = new BehaviorSubject<PageContent>({
     heroTitle: 'Artisan Craftsmanship Meets Modern Elegance',
     heroSubtitle: 'Handcrafted apparel from local artisans. Every stitch tells a story.',

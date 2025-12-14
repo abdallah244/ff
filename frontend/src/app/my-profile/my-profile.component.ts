@@ -102,16 +102,14 @@ export class MyProfileComponent implements OnInit {
       return;
     }
 
-    this.http.get(`http://localhost:3000/api/auth/user/${userId}`).subscribe({
+    this.http.get(`/api/auth/user/${userId}`).subscribe({
       next: (response: any) => {
         this.user = response.user;
         this.name = this.user?.name || '';
         this.address = this.user?.address || '';
         this.country = this.user?.country || '';
         this.governorate = this.user?.governorate || '';
-        this.profileImagePreview = this.user?.profileImage
-          ? `http://localhost:3000${this.user.profileImage}`
-          : null;
+        this.profileImagePreview = this.user?.profileImage ? `${this.user.profileImage}` : null;
 
         if (this.user?.createdAt) {
           const date = new Date(this.user.createdAt);
@@ -243,18 +241,18 @@ export class MyProfileComponent implements OnInit {
         formData.append('userId', userId!);
 
         const uploadResp: any = await this.http
-          .post(`http://localhost:3000/api/auth/user/${userId}/upload-image`, formData)
+          .post(`/api/auth/user/${userId}/upload-image`, formData)
           .toPromise();
         // Update preview with cache-busted URL immediately
         if (uploadResp?.url) {
-          const base = `http://localhost:3000${uploadResp.url}`;
+          const base = `${uploadResp.url}`;
           this.profileImagePreview = `${base}?v=${Date.now()}`;
         }
       }
 
       // Update profile data
       const response: any = await this.http
-        .put(`http://localhost:3000/api/auth/user/${userId}`, {
+        .put(`/api/auth/user/${userId}`, {
           name: this.name,
           address: this.address,
           country: this.country,
@@ -265,7 +263,7 @@ export class MyProfileComponent implements OnInit {
       this.user = response.user;
       // Ensure avatar shows fresh value after profile save
       if (this.user?.profileImage) {
-        const base = `http://localhost:3000${this.user.profileImage}`;
+        const base = `${this.user.profileImage}`;
         this.profileImagePreview = `${base}?v=${Date.now()}`;
       }
       // Do NOT store critical data in localStorage

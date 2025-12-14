@@ -17,7 +17,7 @@ export interface ContactRequest {
 
 @Injectable({ providedIn: 'root' })
 export class ContactService {
-  private apiUrl = 'http://localhost:3000/api/contact';
+  private apiUrl = '/api/contact';
 
   constructor(private http: HttpClient) {}
 

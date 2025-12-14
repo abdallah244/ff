@@ -58,7 +58,7 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
-    this.http.get(`http://localhost:3000/api/auth/user/${userId}`).subscribe({
+    this.http.get(`/api/auth/user/${userId}`).subscribe({
       next: (resp: any) => {
         if (resp.user) {
           this.isLoggedIn = true;

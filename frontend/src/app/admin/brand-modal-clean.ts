@@ -38,7 +38,7 @@ export async function saveNavbarBrandSettings(ctx: any) {
   ctx.cdr?.markForCheck?.();
 
   try {
-    const r1 = await fetch('http://localhost:3000/api/brand/settings', {
+    const r1 = await fetch('/api/brand/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, tagline }),
@@ -49,7 +49,7 @@ export async function saveNavbarBrandSettings(ctx: any) {
     if (ctx.navbarBrandLogoFile) {
       const fd = new FormData();
       fd.append('logo', ctx.navbarBrandLogoFile);
-      const r2 = await fetch('http://localhost:3000/api/brand/settings/logo', {
+      const r2 = await fetch('/api/brand/settings/logo', {
         method: 'POST',
         body: fd,
       });

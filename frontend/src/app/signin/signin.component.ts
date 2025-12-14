@@ -116,7 +116,7 @@ export class SigninComponent {
       formData.append('profileImage', this.profileImage);
     }
 
-    this.http.post('http://localhost:3000/api/auth/register', formData).subscribe(
+    this.http.post('/api/auth/register', formData).subscribe(
       (response: any) => {
         this.loading = false;
         this.success = 'Account created successfully! Redirecting to login...';

@@ -44,7 +44,7 @@ export interface Order {
 })
 export class OrderService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api/orders';
+  private apiUrl = '/api/orders';
 
   createOrder(orderData: CreateOrderDto): Observable<{ message: string; order: Order }> {
     return this.http.post<{ message: string; order: Order }>(`${this.apiUrl}`, orderData);

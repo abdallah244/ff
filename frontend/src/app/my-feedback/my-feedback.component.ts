@@ -45,7 +45,7 @@ export class MyFeedbackComponent implements OnInit {
     }
 
     this.isLoadingUser = true;
-    this.http.get(`http://localhost:3000/api/auth/user/${storedId}`).subscribe({
+    this.http.get(`/api/auth/user/${storedId}`).subscribe({
       next: (resp: any) => {
         if (resp?.user) {
           this.isLoggedIn = true;

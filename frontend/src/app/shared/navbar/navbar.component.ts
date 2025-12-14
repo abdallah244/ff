@@ -60,7 +60,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   private loadBrandSettingsFromBackend() {
-    this.http.get<any>('http://localhost:3000/api/brand/settings').subscribe({
+    this.http.get<any>('/api/brand/settings').subscribe({
       next: (data) => {
         if (data?.name) this.brandName = data.name;
         if (data?.tagline) this.brandTagline = data.tagline;
@@ -78,7 +78,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (!url) return '';
     let base = url;
     if (!(url.startsWith('http://') || url.startsWith('https://'))) {
-      if (url.startsWith('/uploads')) base = `http://localhost:3000${url}`;
+      if (url.startsWith('/uploads')) base = `${url}`;
     }
     if (bust) {
       const v = Date.now();
@@ -111,7 +111,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private loadCurrentUserFromBackend() {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
-    this.http.get<any>(`http://localhost:3000/api/auth/user/${userId}`).subscribe({
+    this.http.get<any>(`/api/auth/user/${userId}`).subscribe({
       next: (resp) => {
         const user = resp?.user;
         if (!user) return;

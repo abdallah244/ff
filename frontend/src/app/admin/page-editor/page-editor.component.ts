@@ -65,7 +65,7 @@ export class PageEditorComponent implements OnInit {
     icon: '',
   };
 
-  private apiUrl = 'http://localhost:3000/api/admin';
+  private apiUrl = '/api/admin';
 
   // Drag & Drop Feature Sorting
   draggedFeatureIndex: number | null = null;
