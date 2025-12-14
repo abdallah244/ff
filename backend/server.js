@@ -4,6 +4,7 @@ const cors = require("cors");
 const compression = require("compression");
 const bcrypt = require("bcrypt");
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 const authRoutes = require("./routes/auth");
@@ -114,22 +115,32 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-// 404 handler
+const PORT = process.env.PORT || 3000;
+// Serve Angular dist if available (for deployment)
+(() => {
+  const candidates = [
+    path.join(__dirname, "../frontend/dist"),
+    path.join(__dirname, "../frontend/dist/frontend"),
+  ];
+  const distPath = candidates.find((p) =>
+    fs.existsSync(path.join(p, "index.html"))
+  );
+
+  if (distPath) {
+    app.use(express.static(distPath));
+    app.get(/^(?!\/api\/).*/, (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+    console.log(`✓ Serving SPA from: ${distPath}`);
+  } else {
+    console.log("✗ SPA dist not found. Skipping static serve.");
+  }
+})();
+
+// 404 handler (after SPA/static so it doesn't block them)
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
-
-const PORT = process.env.PORT || 3000;
-// Serve Angular dist if available (for deployment)
-try {
-  const distPath = path.join(__dirname, "../frontend/dist/frontend");
-  app.use(express.static(distPath));
-  app.get(/^(?!\/api\/).*/, (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
-} catch (e) {
-  // ignore if dist not present in dev
-}
 
 app.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);
