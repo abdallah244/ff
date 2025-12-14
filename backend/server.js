@@ -120,7 +120,7 @@ const PORT = process.env.PORT || 3000;
 (() => {
   const candidates = [
     path.join(__dirname, "../frontend/dist/browser"), // Angular 21+ with @angular/build:application
-    path.join(__dirname, "../frontend/dist"),          // Fallback
+    path.join(__dirname, "../frontend/dist"), // Fallback
     path.join(__dirname, "../frontend/dist/frontend"), // Old structure
   ];
   const distPath = candidates.find((p) =>
