@@ -7,9 +7,27 @@ require("dotenv").config();
 
 const router = express.Router();
 
-// Ensure uploads/brand directory exists
-const uploadDir = path.join(__dirname, "..", "uploads", "brand");
-fs.mkdirSync(uploadDir, { recursive: true });
+// Detect serverless (read-only) runtime and choose a writable dir
+const isServerless =
+  process.env.NETLIFY ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT;
+
+let uploadDir = isServerless
+  ? path.join("/tmp", "uploads", "brand")
+  : path.join(__dirname, "..", "uploads", "brand");
+
+try {
+  fs.mkdirSync(uploadDir, { recursive: true });
+} catch (e) {
+  // Fallback to /tmp on any failure
+  try {
+    uploadDir = path.join("/tmp", "uploads", "brand");
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (e2) {
+    console.error("Failed to prepare upload directory", e2.message);
+  }
+}
 
 // Multer storage
 const storage = multer.diskStorage({
@@ -114,7 +132,9 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ error: "Logo file is required" });
       }
-      const relativePath = "/uploads/brand/" + req.file.filename;
+      const relativePath = isServerless
+        ? `/api/brand/file/${req.file.filename}`
+        : "/uploads/brand/" + req.file.filename;
       let doc = await BrandSettings.findOne();
       if (!doc) doc = await BrandSettings.create({});
       doc.logoUrl = relativePath;
@@ -128,5 +148,18 @@ router.post(
     }
   }
 );
+
+// Serve uploaded brand files (serverless-friendly)
+router.get("/file/:filename", async (req, res) => {
+  try {
+    const file = path.join(uploadDir, req.params.filename);
+    if (!fs.existsSync(file)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    res.sendFile(file);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read file", details: err.message });
+  }
+});
 
 module.exports = router;

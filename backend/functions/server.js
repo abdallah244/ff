@@ -121,14 +121,23 @@ app.use((req, res) => {
 });
 
 // Netlify Function Handler with error guard
+const handler = serverless(app, { basePath: "/.netlify/functions/server" });
+
 exports.handler = async (event, context) => {
   try {
     // Early health shortcut to isolate runtime issues
-    if ((event.path && event.path.endsWith("/api/health")) || (event.rawPath && event.rawPath.endsWith("/api/health"))) {
+    if (
+      (event.path && event.path.endsWith("/api/health")) ||
+      (event.rawPath && event.rawPath.endsWith("/api/health"))
+    ) {
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "ok", runtime: "netlify", ts: new Date().toISOString() }),
+        body: JSON.stringify({
+          status: "ok",
+          runtime: "netlify",
+          ts: new Date().toISOString(),
+        }),
       };
     }
 
@@ -141,7 +150,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    return await serverless(app)(event, context);
+    return await handler(event, context);
   } catch (error) {
     console.error("Function error:", error);
     return {

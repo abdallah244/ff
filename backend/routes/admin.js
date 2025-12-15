@@ -15,9 +15,26 @@ const router = express.Router();
 // ============ FILE UPLOAD SETUP ============
 
 // Create uploads directory if it doesn't exist
-const uploadDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+// Netlify/Serverless functions have a read-only filesystem under /var/task.
+// Use the writable tmp dir when running in serverless.
+const isServerless = !!(process.env.NETLIFY || process.env.AWS_REGION);
+const uploadDir = isServerless
+  ? path.join("/tmp", "uploads")
+  : path.join(__dirname, "../uploads");
+
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn("Uploads dir not writable; falling back to /tmp", e.message);
+  // final fallback
+  const fallback = path.join("/tmp", "uploads");
+  if (!fs.existsSync(fallback)) {
+    try {
+      fs.mkdirSync(fallback, { recursive: true });
+    } catch {}
+  }
 }
 
 // Configure multer for image uploads
@@ -61,7 +78,12 @@ router.post("/upload-image", upload.single("image"), async (req, res) => {
     }
 
     // Generate the public URL for the image
-    const imageUrl = `/uploads/${req.file.filename}`;
+    // NOTE: On serverless, files in /tmp are ephemeral and not publicly served.
+    // Return a function path so the client can download via an API later if needed.
+    const isSrv = isServerless;
+    const imageUrl = isSrv
+      ? `/api/admin/uploaded/${req.file.filename}`
+      : `/uploads/${req.file.filename}`;
 
     res.json({
       success: true,

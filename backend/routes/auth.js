@@ -4,18 +4,32 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const router = express.Router();
+const isServerless =
+  process.env.NETLIFY ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT;
 const User = require("../models/User");
 const MasterCode = require("../models/MasterCode");
 const { sendMasterCodeEmail } = require("../services/emailService");
 
 // Configure multer for profile images
+let profilesDir = isServerless
+  ? path.join("/tmp", "uploads", "profiles")
+  : path.join(process.cwd(), "uploads", "profiles");
+try {
+  fs.mkdirSync(profilesDir, { recursive: true });
+} catch (e) {
+  try {
+    profilesDir = path.join("/tmp", "uploads", "profiles");
+    fs.mkdirSync(profilesDir, { recursive: true });
+  } catch (e2) {
+    console.error("Failed to prepare profiles dir", e2.message);
+  }
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = "uploads/profiles";
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
+    cb(null, profilesDir);
   },
   filename: (req, file, cb) => {
     const uniqueName = `profile-${Date.now()}-${Math.round(
@@ -83,7 +97,9 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
 
     // Get profile image URL if uploaded
     const profileImageUrl = req.file
-      ? `/uploads/profiles/${req.file.filename}`
+      ? isServerless
+        ? `/api/auth/file/${req.file.filename}`
+        : `/uploads/profiles/${req.file.filename}`
       : null;
 
     // Create user
@@ -259,7 +275,9 @@ router.post(
       }
 
       // Update user with new image URL
-      const profileImageUrl = `/uploads/profiles/${req.file.filename}`;
+      const profileImageUrl = isServerless
+        ? `/api/auth/file/${req.file.filename}`
+        : `/uploads/profiles/${req.file.filename}`;
       user.profileImage = profileImageUrl;
       await user.save();
 
@@ -636,3 +654,16 @@ router.post("/admin/verify-master-code", async (req, res) => {
 });
 
 module.exports = router;
+
+// Serve uploaded profile images (serverless-friendly)
+router.get("/file/:filename", async (req, res) => {
+  try {
+    const file = path.join(profilesDir, req.params.filename);
+    if (!fs.existsSync(file)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    res.sendFile(file);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read file", details: err.message });
+  }
+});
