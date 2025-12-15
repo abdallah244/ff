@@ -3,7 +3,6 @@ node_modules/
 npm-debug.log*
 
 # Environments
-.env
 backend/.env
 frontend/.env
 
@@ -11,8 +10,8 @@ frontend/.env
 frontend/dist/
 
 # Editor
-.vscode/
 *.swp
 *.tmp
 # Local Netlify folder
 .netlify
+config.bat
