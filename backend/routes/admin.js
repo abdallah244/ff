@@ -97,6 +97,19 @@ router.post("/upload-image", upload.single("image"), async (req, res) => {
   }
 });
 
+// Serve uploaded files (serverless-friendly)
+router.get("/uploaded/:filename", async (req, res) => {
+  try {
+    const file = path.join(uploadDir, req.params.filename);
+    if (!fs.existsSync(file)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    res.sendFile(file);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read file", details: err.message });
+  }
+});
+
 // ============ PAGE CONTENT ROUTES ============
 
 // Get page content
@@ -330,7 +343,9 @@ router.post(
         return res.status(400).json({ error: "No image file provided" });
       }
 
-      const imageUrl = `/uploads/${req.file.filename}`;
+      const imageUrl = isServerless
+        ? `/api/admin/uploaded/${req.file.filename}`
+        : `/uploads/${req.file.filename}`;
 
       let homeContent = await HomeContent.findOne();
       if (!homeContent) {
@@ -377,7 +392,9 @@ router.post(
         return res.status(400).json({ error: "No image file provided" });
       }
 
-      const imageUrl = `/uploads/${req.file.filename}`;
+      const imageUrl = isServerless
+        ? `/api/admin/uploaded/${req.file.filename}`
+        : `/uploads/${req.file.filename}`;
 
       res.json({
         success: true,
@@ -584,7 +601,9 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const imageUrl = `http://localhost:3000/uploads/${req.file.filename}`;
+      const imageUrl = isServerless
+        ? `/api/admin/uploaded/${req.file.filename}`
+        : `/uploads/${req.file.filename}`;
 
       res.json({
         success: true,
@@ -739,7 +758,9 @@ router.post("/products/image", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const imageUrl = `http://localhost:3000/uploads/${req.file.filename}`;
+    const imageUrl = isServerless
+      ? `/api/admin/uploaded/${req.file.filename}`
+      : `/uploads/${req.file.filename}`;
 
     res.json({
       success: true,
